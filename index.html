@@ -1,1 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR" translate="no"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="google" content="notranslate">
+<title>Espelho Bella PRO</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,500;1,500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2a1230;--pk:#c0396f;--bg:#f7f0f5;--ln:#e6d3e0;--mu:#7a5a78}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font:15px 'DM Sans',sans-serif;background:var(--bg);color:var(--ink);padding:14px 14px 90px;max-width:560px;margin:auto}
+h1{font:500 34px 'Bodoni Moda',serif;line-height:1.05}h1 i{color:var(--pk)}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:12px}
+#st{font-size:12px;color:var(--mu);text-align:right;max-width:130px}
+#stage{border-radius:22px;overflow:hidden;border:1px solid var(--ln);background:#e9dde6;min-height:240px;display:grid;place-items:center}
+canvas{width:100%;display:block}video{display:none}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+button{font:inherit;border:1px solid var(--ln);background:#fff;border-radius:16px;padding:13px 8px;color:var(--ink);cursor:pointer}
+button.pri{background:var(--pk);color:#fff;border-color:var(--pk);font-weight:700}
+section{display:none}section.on{display:block}
+h3{font:500 20px 'Bodoni Moda',serif;margin:14px 0 8px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.grid button.a{border-color:var(--pk);background:#fbe6f0;font-weight:700}
+.sw{display:flex;gap:10px;flex-wrap:wrap}.sw b{width:38px;height:38px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--ln);cursor:pointer}
+.sw b.a{box-shadow:0 0 0 3px var(--pk)}
+input,select{font:inherit;width:100%;padding:12px;border:1px solid var(--ln);border-radius:12px;background:#fff;margin-bottom:8px}
+nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--ln);display:flex;justify-content:center}
+nav div{display:flex;max-width:560px;width:100%}nav button{flex:1;border:0;border-radius:0;padding:16px 4px;color:var(--mu)}nav button.on{color:var(--ink);font-weight:700;box-shadow:inset 0 -3px var(--pk)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.card{background:#fff;border:1px solid var(--ln);border-radius:16px;padding:10px;text-align:center}.card b{display:block;font:500 22px 'Bodoni Moda',serif}.card small{color:var(--mu);font-size:11px}
+.slot{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--ln);border-radius:14px;padding:8px 10px;margin-bottom:6px}
+.slot>b{width:52px;color:var(--pk)}.slot span{flex:1;font-size:14px}.slot button{padding:8px 10px;font-size:13px}.slot.free span{color:#a98ca6}
+#fm{background:#fff;border:1px solid var(--pk);border-radius:16px;padding:12px;margin-bottom:10px;display:none}
+</style></head><body>
+<header><h1>Espelho <i>Bella</i> PRO</h1><div id="st">Escolha Foto ou Câmera</div></header>
+<div id="stage"><canvas id="cv" width="600" height="400"></canvas></div><video id="vd" playsinline muted></video>
+<div class="row"><button class="pri" id="bCam">Câmera ao vivo</button><button id="bFoto">Foto</button><button id="bSave">Salvar</button></div>
+<input type="file" id="fi" accept="image/*" hidden>
+
+<section id="t0" class="on"><h3>Penteado</h3><div class="grid" id="gst"></div><h3>Cor do cabelo</h3><div class="sw" id="swh"></div></section>
+<section id="t1"><h3>Batom</h3><div class="sw" id="swl"></div><h3>Sombra</h3><div class="sw" id="sws"></div><h3>Blush</h3><input type="range" id="bl" min="0" max="60" value="25"></section>
+<section id="t2"><h3>Looks prontos</h3><div class="grid" id="glk"></div></section>
+<section id="t3"><h3 id="hs">Agenda</h3>
+<input type="date" id="dt"><div class="cards"><div class="card"><b id="cN">0</b><small>clientes</small></div><div class="card"><b id="cR">R$0</b><small>previsto</small></div><div class="card"><b id="cX">—</b><small>próxima</small></div></div>
+<div id="fm"><b id="fT"></b><input id="fn" placeholder="Nome da cliente"><input id="fp" type="tel" placeholder="WhatsApp (DDD + número)"><select id="fs"></select><button class="pri" id="fOk" style="width:100%">Salvar horário</button></div>
+<button class="pri" id="bWa" style="width:100%;margin-bottom:10px">Enviar agenda do dia no WhatsApp</button><div id="sl"></div></section>
+<nav><div id="nv"><button class="on">Cabelo</button><button>Maquiagem</button><button>Looks</button><button>Agenda</button></div></nav>
+
+<script type="module">
+/* ===== CONFIG ===== */
+const CONFIG={salao:"Seu Salão",whatsapp:"5575999999999",inicio:8,fim:18,passo:60,
+servicos:[["Corte",60],["Escova",50],["Progressiva",180],["Coloração",150],["Penteado de festa",120],["Maquiagem",100],["Hidratação",70]]};
+const $=s=>document.querySelector(s),cv=$('#cv'),x=cv.getContext('2d'),vd=$('#vd');
+const STY=[{n:"Liso longo",len:1.1,vol:.06,lift:.05,wave:0,bang:0},{n:"Ondulado",len:.9,vol:.12,lift:.08,wave:.06,bang:0},
+{n:"Cacheado volumoso",len:.5,vol:.3,lift:.2,wave:.1,bang:0},{n:"Chanel",len:-.05,vol:.08,lift:.05,wave:0,bang:1},
+{n:"Long bob",len:.35,vol:.08,lift:.06,wave:0,bang:0},{n:"Franja + longo",len:1,vol:.06,lift:.05,wave:0,bang:1},
+{n:"Franja lateral ondulado",len:.8,vol:.12,lift:.08,wave:.05,bang:2},{n:"Pixie curto",len:-.55,vol:.02,lift:.1,wave:0,bang:2},
+{n:"Coque alto",len:-.6,vol:0,lift:0,wave:0,bang:0,bun:1},{n:"Volume glamour",len:.7,vol:.22,lift:.22,wave:.07,bang:0}];
+const HC=["#1b1210","#4a2c1d","#6b3a22","#d9b46a","#eadfc0","#a8431f","#6e1e47","#d8588c"];
+const LC=["#b3122e","#d6456b","#e58a8a","#8c1c3e","#c46a4a","#6b1b3a"];
+const SC=["#8a5a7a","#b07a5a","#4a5a8a","#2e6b5a","#c9a24a","#3a2430"];
+const LOOKS=[["Noiva clássica",8,4,0,0,25],["Executiva",3,1,3,1,15],["Festa glamour",9,0,0,5,35],["Romântica",1,2,1,0,40],["Moderna loira",6,3,2,2,25],["Fashion vinho",5,6,5,4,30]];
+let S={st:0,hc:1,lc:0,sc:0,bl:25},L=null,live=false,fl=null,src=null,ts=1;
+const OVAL=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+const LIP=[61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185];
+function mk(id,arr,key,fn){const e=$(id);e.innerHTML='';arr.forEach((v,i)=>{const b=document.createElement(fn?'button':'b');if(fn)b.textContent=v.n||v[0];else b.style.background=v;b.onclick=()=>{S[key]=i;paint();draw()};e.append(b)})}
+function paint(){[['#gst','st'],['#swh','hc'],['#swl','lc'],['#sws','sc']].forEach(([id,k])=>[...$(id).children].forEach((c,i)=>c.classList.toggle('a',S[k]==i)))}
+mk('#gst',STY,'st',1);mk('#swh',HC,'hc');mk('#swl',LC,'lc');mk('#sws',SC,'sc');
+$('#glk').innerHTML=LOOKS.map((l,i)=>`<button data-i="${i}">${l[0]}</button>`).join('');
+$('#glk').onclick=e=>{const l=LOOKS[e.target.dataset.i];if(!l)return;S={st:l[1],hc:l[2],lc:l[3],sc:l[4],bl:l[5]};$('#bl').value=l[5];paint();draw()};
+$('#bl').oninput=e=>{S.bl=+e.target.value;draw()};paint();
+const tabs=[...document.querySelectorAll('section')];[...$('#nv').children].forEach((b,i)=>b.onclick=()=>{[...$('#nv').children].forEach(c=>c.classList.toggle('on',c==b));tabs.forEach((s,j)=>s.classList.toggle('on',i==j))});
+
+/* ===== Rosto (MediaPipe) ===== */
+async function init(){try{const M=await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs");
+const f=await M.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+fl=await M.FaceLandmarker.createFromOptions(f,{baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"},runningMode:"VIDEO",numFaces:1});
+$('#st').textContent="Pronto — escolha Foto ou Câmera"}catch(e){$('#st').textContent="Erro ao carregar o detector. Verifique a internet."}}
+init();
+function detect(el,smooth){if(!fl)return;const r=fl.detectForVideo(el,ts+=34+(performance.now()%1)),p=r.faceLandmarks[0];
+if(!p){L=null;$('#st').textContent="Rosto não encontrado — olhe de frente";return}
+$('#st').textContent="Rosto encontrado";const w=cv.width,h=cv.height,n=p.map(q=>({x:q.x*w,y:q.y*h}));
+L=(smooth&&L)?n.map((q,i)=>({x:L[i].x*.45+q.x*.55,y:L[i].y*.45+q.y*.55})):n}
+function frame(){let a=L[234],b=L[454];if(a.x>b.x)[a,b]=[b,a];const c={x:(a.x+b.x)/2,y:(a.y+b.y)/2},W=Math.hypot(b.x-a.x,b.y-a.y),ux={x:(b.x-a.x)/W,y:(b.y-a.y)/W},uy={x:-ux.y,y:ux.x};
+const ly=p=>((p.x-c.x)*uy.x+(p.y-c.y)*uy.y)/W;return{c,W,ux,uy,ty:ly(L[10]),cy:ly(L[152])}}
+
+/* ===== Desenho ===== */
+function paintHair(h,p,col,top,bot,wv){h.fillStyle=col;h.fill(p);h.save();h.clip(p);h.lineWidth=.008;
+for(let i=-40;i<=40;i++){h.strokeStyle=i%2?'rgba(255,255,255,.12)':'rgba(0,0,0,.16)';h.beginPath();h.moveTo(i*.016,top-.1);h.bezierCurveTo(i*.028+wv*2,top+.5,i*.026-wv*2,bot-.4,i*.028,bot+.1);h.stroke()}
+const g=h.createLinearGradient(0,top,0,bot);g.addColorStop(0,'rgba(255,255,255,.2)');g.addColorStop(.35,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(0,0,0,.3)');h.fillStyle=g;h.fill(p);h.restore()}
+function hairLayer(){const f=frame(),{c,W,ux,uy,ty,cy}=f,s=STY[S.st],h=hl.getContext('2d'),T=()=>h.setTransform(W*ux.x,W*ux.y,W*uy.x,W*uy.y,c.x,c.y);
+h.setTransform(1,0,0,1,0,0);h.clearRect(0,0,hl.width,hl.height);
+const top=ty-s.lift,bot=cy+s.len,v=s.vol,p=new Path2D(),col=HC[S.hc];T();
+p.moveTo(-.52,ty+.3);p.bezierCurveTo(-.62-v,top+.1,-.4,top-.12,0,top-.12);p.bezierCurveTo(.4,top-.12,.62+v,top+.1,.52,ty+.3);
+p.bezierCurveTo(.58+v,(ty+bot)/2,.56+v,bot-.1,.5+v,bot);const n=6,st=(1+2*v)/n;
+for(let i=1;i<=n;i++){const xx=.5+v-st*i;p.quadraticCurveTo(xx+st/2,bot+(i%2?s.wave:-s.wave)*1.5,xx,bot)}
+p.bezierCurveTo(-.56-v,bot-.1,-.58-v,(ty+bot)/2,-.52,ty+.3);p.closePath();paintHair(h,p,col,top,bot,s.wave);
+h.setTransform(1,0,0,1,0,0);h.save();h.globalCompositeOperation='destination-out';h.beginPath();OVAL.forEach((i,k)=>k?h.lineTo(L[i].x,L[i].y):h.moveTo(L[i].x,L[i].y));h.fill();h.restore();
+T();if(s.bang){const fh=cy-ty,b1=ty+fh*.3,b2=s.bang==2?ty+fh*.52:b1,q=new Path2D();q.moveTo(-.5,ty-.12);q.lineTo(.5,ty-.12);q.lineTo(.5,s.bang==2?ty+fh*.08:b1);q.quadraticCurveTo(0,b1+.05,-.5,b2);q.closePath();paintHair(h,q,col,ty-.1,b2,0)}
+if(s.bun){const q=new Path2D();q.ellipse(0,top-.24,.26,.24,0,0,7);paintHair(h,q,col,top-.5,top,.03)}
+h.setTransform(1,0,0,1,0,0)}
+const hl=document.createElement('canvas');
+function draw(){if(!src)return;x.setTransform(1,0,0,1,0,0);x.drawImage(src,0,0,cv.width,cv.height);if(!L)return;const f=frame(),W=f.W;
+x.save();x.beginPath();LIP.forEach((i,k)=>k?x.lineTo(L[i].x,L[i].y):x.moveTo(L[i].x,L[i].y));x.closePath();x.globalAlpha=.6;x.fillStyle=LC[S.lc];x.fill();x.restore();
+[205,425].forEach(i=>{const g=x.createRadialGradient(L[i].x,L[i].y,0,L[i].x,L[i].y,W*.2);g.addColorStop(0,`rgba(225,70,110,${S.bl/100})`);g.addColorStop(1,'rgba(225,70,110,0)');x.fillStyle=g;x.fillRect(L[i].x-W*.2,L[i].y-W*.2,W*.4,W*.4)});
+[159,386].forEach(i=>{const g=x.createRadialGradient(L[i].x,L[i].y-W*.03,0,L[i].x,L[i].y-W*.03,W*.11);g.addColorStop(0,SC[S.sc]+'99');g.addColorStop(1,SC[S.sc]+'00');x.fillStyle=g;x.fillRect(L[i].x-W*.12,L[i].y-W*.15,W*.24,W*.24)});
+hairLayer();x.drawImage(hl,0,0)}
+function size(w,h){const k=Math.min(1,1080/Math.max(w,h));cv.width=hl.width=Math.round(w*k);cv.height=hl.height=Math.round(h*k)}
+
+/* ===== Foto / Câmera ===== */
+function stop(){live=false;cv.style.transform='';if(vd.srcObject){vd.srcObject.getTracks().forEach(t=>t.stop());vd.srcObject=null}}
+$('#bFoto').onclick=()=>$('#fi').click();
+$('#fi').onchange=e=>{const f=e.target.files[0];if(!f)return;stop();const im=new Image();im.onload=()=>{size(im.naturalWidth,im.naturalHeight);src=im;x.drawImage(im,0,0,cv.width,cv.height);L=null;detect(cv,false);draw()};im.src=URL.createObjectURL(f);e.target.value=''};
+$('#bCam').onclick=async()=>{try{stop();vd.srcObject=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:720},height:{ideal:960}}});await vd.play();size(vd.videoWidth,vd.videoHeight);src=vd;live=true;L=null;cv.style.transform='scaleX(-1)';loop()}catch(e){$('#st').textContent="Câmera bloqueada — permita o acesso"}};
+function loop(){if(!live)return;if(vd.readyState>=2){x.drawImage(vd,0,0,cv.width,cv.height);detect(cv,true);draw()}requestAnimationFrame(loop)}
+$('#bSave').onclick=()=>cv.toBlob(async b=>{const f=new File([b],'espelho-bella.png',{type:'image/png'});
+if(navigator.canShare&&navigator.canShare({files:[f]}))try{await navigator.share({files:[f]});return}catch(e){}
+const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=f.name;a.click()});
+
+/* ===== Agenda ===== */
+let AG=[];try{AG=JSON.parse(localStorage.getItem('bella_ag')||'[]')}catch(e){}
+const sv=()=>{try{localStorage.setItem('bella_ag',JSON.stringify(AG))}catch(e){}},R=n=>'R$'+n.toLocaleString('pt-BR'),dt=$('#dt');
+dt.value=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+$('#fs').innerHTML=CONFIG.servicos.map((s,i)=>`<option value="${i}">${s[0]} — ${R(s[1])}</option>`).join('');
+const hh=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'),
+phn=p=>{p=String(p).replace(/\D/g,'');return p.length<=11?'55'+p:p},
+wa=(n,t)=>window.open(`https://wa.me/${n}?text=${encodeURIComponent(t)}`,'_blank'),
+dl=()=>new Date(dt.value+'T12:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}),
+day=()=>AG.filter(a=>a.d==dt.value).sort((a,b)=>a.t.localeCompare(b.t));
+function rAg(){const D=day(),sl=[];$('#hs').textContent=CONFIG.salao+' — Agenda';
+for(let m=CONFIG.inicio*60;m<CONFIG.fim*60;m+=CONFIG.passo)sl.push(hh(m));
+$('#sl').innerHTML=sl.map(t=>{const a=D.find(z=>z.t==t);return a?`<div class="slot"><b>${t}</b><span>${a.n}<br><small>${a.s} · ${R(a.v)}</small></span><button data-c="${a.id}">Avisar</button><button data-x="${a.id}">✕</button></div>`:`<div class="slot free"><b>${t}</b><span>Livre</span><button data-n="${t}">Agendar</button></div>`}).join('');
+$('#cN').textContent=D.length;$('#cR').textContent=R(D.reduce((s,a)=>s+a.v,0));$('#cX').textContent=D[0]?D[0].t:'—'}
+dt.onchange=rAg;let ft='';
+$('#sl').onclick=e=>{const b=e.target,id=b.dataset.c||b.dataset.x;
+if(b.dataset.n){ft=b.dataset.n;$('#fm').style.display='block';$('#fT').textContent='Horário '+ft+' — '+dl();$('#fn').focus()}
+if(b.dataset.x&&confirm('Remover este horário?')){AG=AG.filter(a=>a.id!=id);sv();rAg()}
+if(b.dataset.c){const a=AG.find(z=>z.id==id);wa(phn(a.p),`Olá, ${a.n}! 💇‍♀️ Seu horário no ${CONFIG.salao} está confirmado:\n📅 ${dl()}\n⏰ ${a.t}\n✂️ ${a.s}\nTe esperamos!`)}};
+$('#fOk').onclick=()=>{const n=$('#fn').value.trim();if(!n)return;const sv0=CONFIG.servicos[$('#fs').value];
+AG.push({id:Date.now(),d:dt.value,t:ft,n,p:$('#fp').value,s:sv0[0],v:sv0[1]});sv();$('#fm').style.display='none';$('#fn').value=$('#fp').value='';rAg()};
+$('#bWa').onclick=()=>{const D=day();if(!D.length)return alert('Nenhum cliente neste dia.');
+const t=`📅 *AGENDA — ${CONFIG.salao}*\n${dl()}\n━━━━━━━━━━━━━━\n`+D.map(a=>`⏰ *${a.t}* — ${a.n}\n     ✂️ ${a.s} · ${R(a.v)}${a.p?'\n     📱 '+a.p:''}`).join('\n\n')+`\n━━━━━━━━━━━━━━\n👥 ${D.length} cliente(s) · 💰 ${R(D.reduce((s,a)=>s+a.v,0))}`;wa(CONFIG.whatsapp,t)};
+rAg();
+</script></body></html>
 
